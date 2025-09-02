@@ -3,20 +3,17 @@ import pandas as pd
 import numpy as np
 import joblib
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import load_model
 import warnings
 
 # Suppress the UserWarning from scikit-learn
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # --- Load the Models and Scaler ---
-# Make sure these files are in the same directory as this script.
 try:
     risk_classifier = joblib.load('risk_strat_classifier.joblib')
     los_regressor = joblib.load('los_regressor.joblib')
     kmeans_model = joblib.load('kmeans_model.joblib')
     cluster_scaler = joblib.load('cluster_scaler.joblib')
-    # Load the new association rule models
     rules = joblib.load('association_rules.joblib')
 except FileNotFoundError:
     st.error("Model files not found! Please ensure all .joblib files are in the same directory and pushed to your GitHub repository.")
@@ -98,18 +95,19 @@ if st.button("Predict"):
 
     input_df = input_df.drop(columns=categorical_features, errors='ignore')
     
-    training_cols = risk_classifier.feature_names_in_
-    input_df = input_df.reindex(columns=training_cols, fill_value=0)
-
     # --- 2. Make Predictions ---
     
     # Prediction 1: Disease Risk
-    risk_prediction = risk_classifier.predict(input_df)[0]
+    training_cols_risk = risk_classifier.feature_names_in_
+    input_df_risk = input_df.reindex(columns=training_cols_risk, fill_value=0)
+    risk_prediction = risk_classifier.predict(input_df_risk)[0]
     risk_map = {0: 'Low', 1: 'Moderate', 2: 'High'}
     predicted_risk = risk_map.get(risk_prediction, "Unknown")
 
     # Prediction 2: Length of Stay
-    los_prediction = los_regressor.predict(input_df)[0]
+    training_cols_los = los_regressor.feature_names_in_
+    input_df_los = input_df.reindex(columns=training_cols_los, fill_value=0)
+    los_prediction = los_regressor.predict(input_df_los)[0]
     
     # Prediction 3: Patient Cluster
     X_cluster_input = input_df[['age', 'systolic_bp', 'diastolic_bp', 'heart_rate', 'cholesterol', 'blood_sugar', 'bmi']]
