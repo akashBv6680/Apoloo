@@ -9,6 +9,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # --- Load the Models and Scaler ---
+# Make sure these files are in the same directory as this script.
 try:
     risk_classifier = joblib.load('risk_strat_classifier.joblib')
     los_regressor = joblib.load('los_regressor.joblib')
@@ -122,9 +123,12 @@ if st.button("Predict"):
 
     relevant_rules = rules[rules['antecedents'].apply(lambda x: user_antecedents.issuperset(set(x)))]
     
-    relevant_rules = relevant_rules.sort_values(by='confidence', ascending=False)
-    
-    top_associations = relevant_rules.head(3)
+    # Check if any rules were found before trying to sort
+    if not relevant_rules.empty:
+        relevant_rules = relevant_rules.sort_values(by='confidence', ascending=False)
+        top_associations = relevant_rules.head(3)
+    else:
+        top_associations = relevant_rules
 
     # --- 3. Display Results ---
     st.header("Prediction Results")
